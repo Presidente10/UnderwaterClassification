@@ -95,7 +95,7 @@ def extract_features_from_directory(audio_directory):
 
 # Funzione principale
 def main():
-    audio_directory = 'C:/Users/mario/OneDrive/Desktop/exp_2'
+    audio_directory = 'C:/Users/frees/Desktop/DATASET_SEGMENTATO_88'
     df = extract_features_from_directory(audio_directory)
 
     if not df.empty:

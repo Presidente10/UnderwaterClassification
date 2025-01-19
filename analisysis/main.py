@@ -149,7 +149,7 @@ def plot_distribution(values, title, x_label):
 
 if __name__ == "__main__":
     # Specifica il percorso radice del dataset audio
-    dataset_root = 'C://Users//mario//OneDrive//Desktop//Dataset - originale_con_duplicati'
+    dataset_root = 'C:/Users/frees/Desktop/Dataset originale con duplicati'
 
     # Estrai le informazioni audio dal dataset
     extracted_features, amplitudes, durations, frequencies, num_channels_list, phases, max_internal_frequencies, bit_depths = extract_audio_features(dataset_root)

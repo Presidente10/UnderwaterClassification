@@ -6,7 +6,7 @@ import os
 import numpy as np
 
 
-df = pd.read_csv("/datasets_csv/audio_features_dataset_no_duplicates.csv")
+df = pd.read_csv("C:/Users/frees/Documents/GitHub/UnderwaterClassification/datasets_csv/audio_features_dataset_no_duplicates.csv")
 
 def estrai_classe_target(file_path):
     # Filtra le righe dove la colonna 'classe' è 'Target'

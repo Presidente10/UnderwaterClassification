@@ -49,7 +49,6 @@ def extract_features(file_path):
         return None
 
 
-# Funzione per estrarre caratteristiche da una directory
 def extract_features_from_directory(audio_directory):
     features_list = []
     file_names = []
@@ -63,9 +62,19 @@ def extract_features_from_directory(audio_directory):
             if filename.endswith('.wav'):
                 files.append(os.path.join(root, filename))
 
+    total_files = len(files)
+    processed_files = 0
+    percent_complete = 0
+
     # Usa tqdm per mostrare la barra di avanzamento
-    for file_path in tqdm(files, desc="Elaborazione file audio", unit="file"):
-        print(f"Processing file: {os.path.basename(file_path)}")
+    for file_path in tqdm(files, desc="Elaborazione file audio", unit="file", position=0, leave=True):
+        processed_files += 1
+        new_percent_complete = int((processed_files / total_files) * 100)
+
+        if new_percent_complete > percent_complete:
+            percent_complete = new_percent_complete
+            print(f"Progress: {percent_complete}%")
+
         features = extract_features(file_path)
         if features is not None:
             features_list.append(features)
@@ -94,7 +103,7 @@ def extract_features_from_directory(audio_directory):
 
 # Funzione principale
 def main():
-    audio_directory = 'C:/Users/mario/OneDrive/Desktop/exp_1'
+    audio_directory = 'C:/Users/frees/Desktop/DATASET_SEGMENTATO_88'
     df = extract_features_from_directory(audio_directory)
 
     if not df.empty:
