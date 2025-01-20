@@ -110,15 +110,15 @@ def resample_dataset(dataset_path, sr):
 
 
 if __name__ == "__main__":
-    dataset_root = "C://Users//mario//OneDrive//Desktop//Dataset - normalizzato//"
+    dataset_root = "C:/Users/frees/Desktop/Dataset pulito senza duplicati Normalizzato_44100"
 
     # Resample the dataset before extracting features
-    resample_dataset(dataset_root, 96000)
+    resample_dataset(dataset_root, 44100)
 
     # Extract features after resampling
     extracted_features, amplitudes, durations, frequencies, num_channels_list, phases, max_internal_frequencies, bit_depths = extract_audio_features(
         dataset_root)
 
-    output_csv_file = '../datasets_csv/audio_features_dataset_96000.csv'
+    output_csv_file = '../datasets_csv/audio_features_dataset_44100.csv'
     save_to_csv(extracted_features, output_csv_file)
     print(f"Il file CSV '{output_csv_file}' è stato creato con successo.")

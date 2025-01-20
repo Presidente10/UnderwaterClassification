@@ -11,6 +11,11 @@ import matplotlib.pyplot as plt
 import numpy as np
 from sklearn.preprocessing import LabelEncoder
 from sklearn.impute import SimpleImputer
+import numpy as np
+import pandas as pd
+from lightgbm import LGBMClassifier
+from sklearn.model_selection import StratifiedKFold, GridSearchCV
+from sklearn.metrics import accuracy_score, classification_report
 
 ###############################################################################
 #                          SPLIT DATASET MULTICLASS
@@ -89,8 +94,7 @@ def split_dataset(df, train_size=0.8, val_size=0.1, test_size=0.1):
 ###############################################################################
 def apply_smote_multiclass(X_train, y_train, k_neighbors=1):
     """
-    Applica SMOTE multiclasse su X_train, y_train (solo sulle feature numeriche).
-    Rimuove eventuali classi con 1 solo campione e riduce k_neighbors se necessario.
+
     """
     y_series = pd.Series(y_train)
 
@@ -255,19 +259,21 @@ def train_svm_multiclass_extra(X_train, y_train, X_val, y_val, X_test, y_test):
 
 
 
-def train_lightgbm_multiclass_extra(X_train, y_train, X_val, y_val, X_test, y_test):
+def train_lightgbm_multiclass_extra(X_train, y_train,
+                                    X_val, y_val,
+                                    X_test, y_test):
     """
-    Modello LightGBM multiclasse con parametri estesi.
-    Include valutazione sul set di validazione e di test.
+    Modello LightGBM multiclasse con parametri estesi e qualche
+    accorgimento per ridurre l'overfitting (max_depth, bagging_freq, ecc.).
+    Include valutazione su set di validazione e test.
     """
-
-
+    import numpy as np
+    import pandas as pd
     from sklearn.model_selection import GridSearchCV, PredefinedSplit
     from sklearn.metrics import accuracy_score, classification_report
-    import pandas as pd
-    import numpy as np
+    from lightgbm import LGBMClassifier
 
-    # Rimuove eventuali NaN
+    # Rimuove eventuali NaN dal target
     mask_train = ~pd.isna(y_train)
     X_train = X_train[mask_train]
     y_train = y_train[mask_train]
@@ -280,23 +286,24 @@ def train_lightgbm_multiclass_extra(X_train, y_train, X_val, y_val, X_test, y_te
     X_test = X_test[mask_test]
     y_test = y_test[mask_test]
 
-    # Pulizia colonne
-    X_train = X_train.drop(columns=['Class','Parent','Subclass','File Name'], errors='ignore')
-    X_val   = X_val.drop(columns=['Class','Parent','Subclass','File Name'], errors='ignore')
-    X_test  = X_test.drop(columns=['Class','Parent','Subclass','File Name'], errors='ignore')
+    # Pulizia colonne inutili per il training
+    drop_cols = ['Class', 'Parent', 'Subclass', 'File Name']
+    X_train = X_train.drop(columns=drop_cols, errors='ignore')
+    X_val   = X_val.drop(columns=drop_cols, errors='ignore')
+    X_test  = X_test.drop(columns=drop_cols, errors='ignore')
 
     # Unione di train e val per GridSearch con PredefinedSplit
     X_trainval = pd.concat([X_train, X_val], axis=0)
     y_trainval = np.concatenate([y_train, y_val])
 
+    # Crea l'array test_fold: -1 per righe di train, 0 per righe di val
     test_fold = np.concatenate([
         -1 * np.ones(len(X_train), dtype=int),
-         0 * np.ones(len(X_val), dtype=int)
+         0 * np.ones(len(X_val),   dtype=int)
     ])
     ps = PredefinedSplit(test_fold=test_fold)
 
-    # Definizione del modello LightGBM
-    from lightgbm import LGBMClassifier
+    # Definizione del modello base
     lgb_estimator = LGBMClassifier(
         objective='multiclass',
         random_state=42,
@@ -304,19 +311,23 @@ def train_lightgbm_multiclass_extra(X_train, y_train, X_val, y_val, X_test, y_te
         n_jobs=-1
     )
 
-    # Griglia di iperparametri
+    # Griglia di iperparametri (riduce overfitting e parametri inutili)
     param_grid = {
-        'learning_rate': [0.05, 0.1],
-        'num_leaves': [31, 63, 127],
-        'feature_fraction': [0.8, 1.0],
-        'bagging_fraction': [0.8, 1.0],
-        'n_estimators': [100, 300]
+        'learning_rate':     [0.01, 0.05, 0.1],
+        'num_leaves':        [31, 63],      # troppi leaves -> overfitting
+        'max_depth':         [6, 12, -1],   # -1 => no limit
+        'min_child_samples': [20, 50],      # min_data_in_leaf
+        # Attiva il bagging: bagging_fraction < 1.0 e bagging_freq > 0
+        'bagging_fraction':  [0.8],         # se metti 1.0, bagging è disattivato
+        'bagging_freq':      [1],           # bagging a ogni iterazione
+        # Campionamento colonne
+        'feature_fraction':  [0.8, 1.0],
+        'n_estimators':      [100, 300]
     }
 
-    # GridSearchCV
     grid_search = GridSearchCV(
-        lgb_estimator,
-        param_grid,
+        estimator=lgb_estimator,
+        param_grid=param_grid,
         cv=ps,
         scoring='accuracy',
         n_jobs=-1,
@@ -326,14 +337,14 @@ def train_lightgbm_multiclass_extra(X_train, y_train, X_val, y_val, X_test, y_te
 
     best_model = grid_search.best_estimator_
 
-    # Valutazione sul set di validazione
+    # Valutazione su Validation
     y_val_pred = best_model.predict(X_val)
     accuracy_val = accuracy_score(y_val, y_val_pred)
     print(f"\nAccuratezza (Val) = {accuracy_val:.4f}")
     print("\n=== Report - Validation ===")
     print(classification_report(y_val, y_val_pred, digits=4, zero_division=0))
 
-    # Valutazione sul set di test
+    # Valutazione su Test
     y_test_pred = best_model.predict(X_test)
     accuracy_test = accuracy_score(y_test, y_test_pred)
     print(f"\nAccuratezza (Test) = {accuracy_test:.4f}")
@@ -342,6 +353,82 @@ def train_lightgbm_multiclass_extra(X_train, y_train, X_val, y_val, X_test, y_te
 
     return best_model
 
+
+from sklearn.model_selection import StratifiedKFold
+
+
+
+
+def train_lightgbm_multiclass_kfold(X_train, y_train, X_test, y_test):
+    """
+    Addestra un modello LightGBM multiclasse usando k-fold cross validation
+    (invece di un singolo set di validazione).
+  """
+
+
+    # Rimuoviamo eventuali valori NaN dal target
+    train_mask = ~pd.isna(y_train)
+    X_train = X_train[train_mask]
+    y_train = y_train[train_mask]
+
+    test_mask = ~pd.isna(y_test)
+    X_test = X_test[test_mask]
+    y_test = y_test[test_mask]
+
+    # Rimuovi colonne testuali
+    drop_cols = ['Class', 'Parent', 'Subclass', 'File Name']
+    X_train = X_train.drop(columns=drop_cols, errors='ignore')
+    X_test  = X_test.drop(columns=drop_cols, errors='ignore')
+
+    # Modello base LightGBM
+    lgb_estimator = LGBMClassifier(
+        objective='multiclass',
+        random_state=42,
+        num_class=len(np.unique(y_train)),
+        n_jobs=-1
+    )
+
+    # Griglia di iperparametri per ridurre overfitting
+    param_grid = {
+        'learning_rate': [0.01, 0.05, 0.1],
+        'num_leaves': [31, 63],
+        'max_depth': [6, 12, -1],  # -1 = nessun limite
+        'min_child_samples': [20, 50],  # regolarizzazione sulle foglie
+        'bagging_fraction': [0.8],  # <1.0 attiva bagging
+        'bagging_freq': [1],  # esegue bagging ogni iter
+        'feature_fraction': [0.8, 1.0],
+        'n_estimators': [100, 300]
+    }
+
+    # Cross-validation stratificata (5 fold)
+    skf = StratifiedKFold(n_splits=5, shuffle=True, random_state=42)
+
+    # Impostiamo la GridSearchCV
+    grid_search = GridSearchCV(
+        estimator=lgb_estimator,
+        param_grid=param_grid,
+        cv=skf,  # k-fold
+        scoring='accuracy',
+        n_jobs=-1,
+        verbose=1
+    )
+
+    # Esegui la ricerca sulla parte di training
+    grid_search.fit(X_train, y_train)
+
+    # Miglior modello trovato
+    best_model = grid_search.best_estimator_
+    print("\nMigliori iperparametri trovati:")
+    print(grid_search.best_params_)
+
+    # Valutazione sul Test set
+    y_test_pred = best_model.predict(X_test)
+    accuracy_test = accuracy_score(y_test, y_test_pred)
+    print(f"\nAccuratezza (Test) = {accuracy_test:.4f}")
+    print("\n=== Report - Test ===")
+    print(classification_report(y_test, y_test_pred, digits=4, zero_division=0))
+
+    return best_model
 
 
 ###############################################################################
@@ -452,10 +539,10 @@ def lightgbm_plot_confusion_matrices(model,
     """
     Per LightGBM (Booster nativo), predict(X_val) di solito restituisce prob.
     """
-    y_val_pred_proba  = model.predict(X_val)
-    y_test_pred_proba = model.predict(X_test)
+    y_val_pred_proba = model.predict_proba(X_val)
+    y_test_pred_proba = model.predict_proba(X_test)
 
-    y_val_pred_encoded  = np.argmax(y_val_pred_proba, axis=1)
+    y_val_pred_encoded = np.argmax(y_val_pred_proba, axis=1)
     y_test_pred_encoded = np.argmax(y_test_pred_proba, axis=1)
 
     # Converti in stringhe

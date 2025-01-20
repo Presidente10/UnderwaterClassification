@@ -124,7 +124,7 @@ def save_to_csv(data, output_file):
 
 
 if __name__ == "__main__":
-    dataset_root = "C://Users//mario//OneDrive//Desktop//Dataset - senza_duplicati//"
+    dataset_root = "C:/Users/frees/Desktop/Dataset pulito senza duplicati"
 
     extracted_features, amplitudes, durations, frequencies, num_channels_list, phases, max_internal_frequencies, bit_depths = extract_audio_features(dataset_root)
 

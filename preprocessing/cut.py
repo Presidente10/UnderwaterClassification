@@ -78,12 +78,12 @@ def save_to_csv(data, output_file):
 
 
 if __name__ == "__main__":
-    dataset_root = "C://Users//mario//OneDrive//Desktop//Dataset_1//"
+    dataset_root = "C:/Users/frees/Desktop/Dataset pulito senza duplicati Normalizzato_44100_seg"
 
     # Estrai le features audio compresi i segmenti
     audio_features, segment_features = extract_audio_features(dataset_root)
 
-    output_segment_features_file = '../datasets_csv/segment_features_dataset.csv'
+    output_segment_features_file = '../datasets_csv/segment_features_dataset_44100.csv'
 
     save_to_csv(segment_features, output_segment_features_file)
 

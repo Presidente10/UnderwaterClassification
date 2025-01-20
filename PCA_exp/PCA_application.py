@@ -1,13 +1,15 @@
+
+
 import pandas as pd
 from sklearn.decomposition import PCA
 from sklearn.preprocessing import StandardScaler
 
 #CSV
-df = pd.read_csv(".csv")
+df = pd.read_csv("C:/Users/frees/Documents/GitHub/UnderwaterClassification/features_extraction/exp1_audio_features_44100.csv")
 
 # Separa le colonne non numeriche e quelle numeriche
-metadata = df[['File Name', 'Class', 'subclass']]
-features = df.drop(columns=['File Name', 'Class', 'subclass'])
+metadata = df[['File Name', 'Class', 'Subclass']]
+features = df.drop(columns=['File Name', 'Class', 'Subclass'])
 
 # Standardizza le feature numeriche
 scaler = StandardScaler()

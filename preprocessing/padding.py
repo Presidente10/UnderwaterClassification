@@ -6,8 +6,8 @@ import pandas as pd
 #audio_directory = "C://Users//mario//OneDrive//Desktop//Dataset_segmentato//"  # Sostituisci con il percorso della tua directory
 # Nome del file CSV di output
 #output_csv = "audio_features_padding.csv"
-audio_directory = "C:/Users/mario/OneDrive/Desktop/Dataset_1"
-output_csv = "audio_features_padding_no_seg.csv"
+audio_directory = "C:/Users/frees/Desktop/Dataset pulito senza duplicati Normalizzato_44100_seg"
+output_csv = "segment_features_dataset_44100_pad.csv"
 
 
 # Funzione per aggiungere silenzio ai file audio inferiori a 4 secondi

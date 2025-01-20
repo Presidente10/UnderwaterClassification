@@ -5,6 +5,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 from collections import Counter
+import shutil
 
 def extract_audio_features(root_folder):
     # Lista per memorizzare le informazioni estratte
@@ -88,6 +89,35 @@ def extract_audio_features(root_folder):
 
     return audio_features, amplitudes, durations, frequencies, num_channels_list, phases, max_internal_frequencies, bit_depths
 
+
+def create_clean_dataset(duplicates, root_folder, clean_folder):
+    """
+    Crea un nuovo dataset senza duplicati.
+
+    Parameters:
+        duplicates (DataFrame): DataFrame contenente i duplicati.
+        root_folder (str): Percorso del dataset originale.
+        clean_folder (str): Percorso del nuovo dataset senza duplicati.
+    """
+    os.makedirs(clean_folder, exist_ok=True)  # Crea la directory se non esiste
+    duplicate_files = set(duplicates['Nome file'])
+    copied_files = []
+
+    for root, dirs, files in os.walk(root_folder):
+        for file in files:
+            file_name = os.path.splitext(file)[0]  # Nome del file senza estensione
+            if file_name not in duplicate_files:  # Copia solo file non duplicati
+                source_path = os.path.join(root, file)
+                relative_path = os.path.relpath(source_path, root_folder)  # Mantieni la struttura
+                dest_path = os.path.join(clean_folder, relative_path)
+                os.makedirs(os.path.dirname(dest_path), exist_ok=True)  # Crea le cartelle
+                shutil.copy2(source_path, dest_path)  # Copia il file
+                copied_files.append(dest_path)
+                print(f"File copiato: {dest_path}")
+
+    return copied_files
+
+
 def save_to_csv(data, output_file):
     df = pd.DataFrame(data)
     df.to_csv(output_file, index=False)
@@ -147,17 +177,28 @@ def plot_distribution(values, title, x_label):
     plt.tight_layout()
     plt.show()
 
+
 if __name__ == "__main__":
-    # Specifica il percorso radice del dataset audio
     dataset_root = 'C:/Users/frees/Desktop/Dataset originale con duplicati'
 
     # Estrai le informazioni audio dal dataset
-    extracted_features, amplitudes, durations, frequencies, num_channels_list, phases, max_internal_frequencies, bit_depths = extract_audio_features(dataset_root)
+    extracted_features, amplitudes, durations, frequencies, num_channels_list, phases, max_internal_frequencies, bit_depths = extract_audio_features(
+        dataset_root)
 
     # Specifica il percorso per salvare il file CSV di output
     output_csv_file = '../datasets_csv/audio_features_dataset.csv'
 
     # Salva le informazioni estratte in un file CSV
     save_to_csv(extracted_features, output_csv_file)
-
     print(f"Il file CSV '{output_csv_file}' è stato creato con successo.")
+    clean_dataset_root = 'C:/Users/frees/Desktop/Dataset pulito senza duplicati'
+
+    # Rimuovi i duplicati
+    duplicates_df = pd.read_csv(output_csv_file)
+    duplicates = duplicates_df[duplicates_df.duplicated(subset=['Nome file'], keep=False)]
+
+    # Crea il nuovo dataset senza duplicati
+    copied_files = create_clean_dataset(duplicates, dataset_root, clean_dataset_root)
+
+    print(f"Creato un nuovo dataset senza duplicati: {clean_dataset_root}")
+    print(f"Copiati {len(copied_files)} file unici.")

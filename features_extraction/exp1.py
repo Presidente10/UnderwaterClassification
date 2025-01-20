@@ -103,12 +103,12 @@ def extract_features_from_directory(audio_directory):
 
 # Funzione principale
 def main():
-    audio_directory = 'C:/Users/frees/Desktop/DATASET_SEGMENTATO_88'
+    audio_directory = 'C:/Users/frees/Desktop/Dataset pulito senza duplicati Normalizzato_44100_seg'
     df = extract_features_from_directory(audio_directory)
 
     if not df.empty:
-        df.to_csv('exp1_audio_features.csv', index=False)
-        print(f"Caratteristiche estratte da {len(df)} file audio e salvate in 'exp1_audio_features.csv'.")
+        df.to_csv('exp1_audio_features_44100.csv', index=False)
+        print(f"Caratteristiche estratte da {len(df)} file audio e salvate in 'exp1_audio_features_96000.csv'.")
     else:
         print("Nessuna caratteristica estratta.")
 
