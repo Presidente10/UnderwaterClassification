@@ -1,4 +1,5 @@
 import pandas as pd
+from sklearn.impute import SimpleImputer
 from sklearn.model_selection import GroupShuffleSplit, GridSearchCV
 from imblearn.over_sampling import SMOTE
 from sklearn.ensemble import RandomForestClassifier
@@ -21,6 +22,10 @@ def split_dataset(df, train_size=0.8, val_size=0.1, test_size=0.1):
     mappando la 'Subclass' in numeri interi (multiclasse).
     Mantiene la coesione dei gruppi (Parent) con GroupShuffleSplit.
     """
+    # 1. Gestione dei NaN (per ora su tutto il dataframe)
+    imputer = SimpleImputer(strategy='mean')
+    numeric_columns = df.select_dtypes(include=['float64', 'int64']).columns
+    df[numeric_columns] = imputer.fit_transform(df[numeric_columns])
 
     # Encoding per la Subclass
     subclass_encoder = LabelEncoder()
