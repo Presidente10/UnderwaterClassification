@@ -16,12 +16,12 @@ from sklearn.metrics import ConfusionMatrixDisplay, confusion_matrix
 from sklearn.preprocessing import LabelEncoder
 
 
-###############################################################################
+
 #                               SPLIT DATASET
-###############################################################################
+
 def split_dataset(df, train_size=0.8, val_size=0.1, test_size=0.1):
-    """
-    Suddivide il dataset in train, validation e test, gestisce i NaN
+    """""
+    Suddivide il dataset in train, validation e test, gestendo i NaN
     e applica un label encoder alle classi.
     """
 
@@ -77,13 +77,13 @@ def split_dataset(df, train_size=0.8, val_size=0.1, test_size=0.1):
     y_val_encoded = le.transform(y_val)
     y_test_encoded = le.transform(y_test)
 
-    # 8. Rimuovi colonne di ordinamento (opzionale)
+    # 8. Rimozione colonne di ordinamento
     columns_to_drop = ['File_Prefix', 'Segment_Number']
     X_train.drop(columns=columns_to_drop, inplace=True)
     X_val.drop(columns=columns_to_drop, inplace=True)
     X_test.drop(columns=columns_to_drop, inplace=True)
 
-    # 9. Report
+    # 9. Stampe
     total_samples = len(df)
     print(f"\nDimensione del set di addestramento: {len(X_train)} campioni "
           f"({len(X_train) / total_samples:.2%})")
@@ -102,13 +102,13 @@ def split_dataset(df, train_size=0.8, val_size=0.1, test_size=0.1):
     return X_train, X_val, X_test, y_train_encoded, y_val_encoded, y_test_encoded
 
 
-###############################################################################
+
 #                    SMOTE PER SOTTOCLASSI E CLASSI PRINCIPALI
-###############################################################################
+
 def apply_smote_binary(X_train, y_train, k_neighbors=1):
 
    # Applica un unico SMOTE al dataset binario
-    #(Class = Target/Non-Target) IGNORANDO la subdivisione Subclass.
+   #(Class = Target/Non-Target) IGNORANDO la subdivisione Subclass.
 
 
     # Copia X_train per non sovrascrivere i dati originali
@@ -128,23 +128,16 @@ def apply_smote_binary(X_train, y_train, k_neighbors=1):
     # SMOTE binario
     smote = SMOTE(k_neighbors=k_neighbors, random_state=42)
     X_resampled_num, y_resampled = smote.fit_resample(X_train_num, y_train)
-
-    # Se vuoi ri-aggiungere eventuali colonne non numeriche:
-    # (tipicamente non servono per il training di un modello ML,
-    #  ma se desideri mantenerle, devi "replicarle" per le righe sintetiche.)
-    # In molti casi, si procede solo con le feature numeriche.
-    # Per semplicità, restituiamo le sole feature numeriche bilanciate.
-
     X_resampled = pd.DataFrame(X_resampled_num, columns=numeric_columns)
 
     return X_resampled, y_resampled
 
 
-###############################################################################
-#                      MODELLI: RF, SVM, LightGBM (invariati)
-###############################################################################
+
+#                      MODELLI: RF, SVM, LightGBM Base
+
 def train_random_forest(X_train, y_train, X_val, y_val, X_test, y_test):
-    # Rimuovi colonne non necessarie
+    # Rimozione colonne non necessarie
     X_train = X_train.drop(columns=['Class', 'Parent', 'Subclass', 'File Name'], errors='ignore')
     X_val = X_val.drop(columns=['Class', 'Parent', 'Subclass', 'File Name'], errors='ignore')
     X_test = X_test.drop(columns=['Class', 'Parent', 'Subclass', 'File Name'], errors='ignore')
@@ -174,7 +167,7 @@ def train_random_forest(X_train, y_train, X_val, y_val, X_test, y_test):
     print(f"Accuratezza sul Validation Set: {accuracy_val:.4f}")
     print(f"Log Loss sul Validation Set: {logloss_val:.4f}")
 
-    # Report di classificazione per il Validation Set
+    # Stampe di classificazione per il Validation Set
     print("\n=== Report di Classificazione - Validation Set ===")
     print(classification_report(y_val, y_val_pred, digits=4,labels=np.unique(np.concatenate((y_val, y_val_pred))),
                                 zero_division=0))
@@ -301,30 +294,19 @@ def train_lightgbm(X_train, y_train, X_val, y_val, X_test, y_test):
     return lgb_model
 
 
-###############################################################################
+
 #                  FUNZIONI PER PLOTTARE LE MATRICI DI CONFUSIONE
-###############################################################################
+
 def rf_plot_confusion_matrices(model,
                                X_val, y_val_encoded,
                                X_test, y_test_encoded,
                                display_labels=None):
-    """
-    Mostra due confusion matrix (val/test) in formato percentuale
-    usando le previsioni di un modello (Random Forest).
 
-    Parametri:
-      - model: modello addestrato
-      - X_val, y_val_encoded: dati e label (numeriche) di validazione
-      - X_test, y_test_encoded: dati e label (numeriche) di test
-      - display_labels: lista di etichette testuali da mostrare sugli assi
-                        (es. ["Non-Target","Target"])
-                        Se None, verranno usate etichette generiche.
-    """
     # Predizioni del modello
     y_val_pred = model.predict(X_val)
     y_test_pred = model.predict(X_test)
 
-    # Se non fornisci etichette, usiamo placeholder
+    # Se non ci sono etichette, usiamo placeholder
     if display_labels is None:
         display_labels = ["Class 0", "Class 1"]
 
@@ -361,20 +343,13 @@ def rf_plot_confusion_matrices(model,
     plt.show()
 
 
-###############################################################################
+
 #                  2) SVM - Confusion Matrix
-###############################################################################
+
 def svm_plot_confusion_matrices(model,
                                 X_val, y_val,
                                 X_test, y_test):
-    """
-    Genera due confusion matrix (validazione e test) in percentuali
-    per un modello SVM.
 
-    Qui y_val, y_test sono etichette testuali (es. 'Target','Non-Target').
-    Vengono encodate con LabelEncoder all'interno.
-    Le etichette reali compaiono sugli assi.
-    """
     le = LabelEncoder()
     y_val_encoded = le.fit_transform(y_val)
     y_test_encoded = le.transform(y_test)
@@ -420,24 +395,14 @@ def svm_plot_confusion_matrices(model,
     plt.show()
 
 
-###############################################################################
+
 #                  3) LightGBM - Confusion Matrix
-###############################################################################
+
 def lightgbm_plot_confusion_matrices(model,
                                      X_val, y_val_encoded,
                                      X_test, y_test_encoded,
                                      display_labels=None):
-    """
-    Genera due confusion matrix (validazione e test) in percentuali
-    per un modello LightGBM. Le etichette (encoded) vengono confrontate
-    con le argmax delle probabilità di previsione.
 
-    Parametri:
-      - model: modello LightGBM addestrato
-      - X_val, y_val_encoded: dati e label numeriche di validazione
-      - X_test, y_test_encoded: dati e label numeriche di test
-      - display_labels: etichette testuali da mostrare sugli assi
-    """
     # Predizioni di probabilità
     y_val_pred_proba = model.predict(X_val)
     y_test_pred_proba = model.predict(X_test)

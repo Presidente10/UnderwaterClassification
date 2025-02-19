@@ -2,7 +2,7 @@ import os
 import librosa
 import numpy as np
 import pandas as pd
-from tqdm import tqdm  # Importa tqdm per la barra di avanzamento
+from tqdm import tqdm
 
 
 # Funzione per calcolare MFCC

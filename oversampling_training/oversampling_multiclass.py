@@ -10,16 +10,16 @@ from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay
 import matplotlib.pyplot as plt
 import numpy as np
 from sklearn.preprocessing import LabelEncoder
-from sklearn.impute import SimpleImputer
 
-###############################################################################
+
+
 #                          SPLIT DATASET MULTICLASS
-###############################################################################
+
 def split_dataset(df, train_size=0.8, val_size=0.1, test_size=0.1):
     """
     Suddivide il dataset in Train, Validation e Test,
     mappando la 'Subclass' in numeri interi (multiclasse).
-    Mantiene la coesione dei gruppi (Parent) grazie a GroupShuffleSplit.
+    Mantiene la coesione dei gruppi (Parent) con GroupShuffleSplit.
     """
 
     # Encoding per la Subclass
@@ -62,7 +62,7 @@ def split_dataset(df, train_size=0.8, val_size=0.1, test_size=0.1):
     y_val   = X_val['Subclass_encoded'].values
     y_test  = X_test['Subclass_encoded'].values
 
-    # Rimuovi la colonna encoding
+    # Rimozione la colonna encoding
     X_train.drop(columns=['Subclass_encoded'], inplace=True)
     X_val.drop(columns=['Subclass_encoded'], inplace=True)
     X_test.drop(columns=['Subclass_encoded'], inplace=True)
@@ -84,17 +84,17 @@ def split_dataset(df, train_size=0.8, val_size=0.1, test_size=0.1):
     return X_train, X_val, X_test, y_train, y_val, y_test, subclass_encoder
 
 
-###############################################################################
+
 #                           SMOTE MULTICLASS
-###############################################################################
+
 def apply_smote_multiclass(X_train, y_train, k_neighbors=1):
     """
     Applica SMOTE multiclasse su X_train, y_train (solo sulle feature numeriche).
-    Rimuove eventuali classi con 1 solo campione e riduce k_neighbors se necessario.
+    Rimozione eventuali classi con 1 solo campione e riduce k_neighbors se necessario.
     """
     y_series = pd.Series(y_train)
 
-    # Rimuovi classi con un solo campione
+    # Rimozione classi con un solo campione
     class_counts = y_series.value_counts()
     to_remove = class_counts[class_counts == 1].index
     if len(to_remove) > 0:
@@ -122,9 +122,9 @@ def apply_smote_multiclass(X_train, y_train, k_neighbors=1):
     return X_resampled_num, y_resampled
 
 
-###############################################################################
+
 #           MODELLI MULTICLASS: Random Forest, SVM, LightGBM
-###############################################################################
+
 def train_random_forest_multiclass(X_train, y_train, X_val, y_val, X_test, y_test):
     """
     Modello Random Forest multiclasse, con GridSearchCV e output a 4 cifre decimali.
@@ -256,9 +256,9 @@ def train_lightgbm_multiclass(X_train, y_train, X_val, y_val, X_test, y_test):
 
     return lgb_model
 
-###############################################################################
+
 #               CONFUSION MATRIX MULTICLASS in PERCENTUALE
-###############################################################################
+
 def rf_plot_confusion_matrices(model,
                                X_val, y_val_encoded,
                                X_test, y_test_encoded,
@@ -271,7 +271,7 @@ def rf_plot_confusion_matrices(model,
     y_val_pred_encoded  = model.predict(X_val)
     y_test_pred_encoded = model.predict(X_test)
 
-    # Convertiamo in stringhe
+    # Conversione in stringhe
     y_val_str        = subclass_encoder.inverse_transform(y_val_encoded)
     y_val_pred_str   = subclass_encoder.inverse_transform(y_val_pred_encoded)
     y_test_str       = subclass_encoder.inverse_transform(y_test_encoded)
@@ -361,9 +361,7 @@ def lightgbm_plot_confusion_matrices(model,
                                      X_val, y_val_encoded,
                                      X_test, y_test_encoded,
                                      subclass_encoder):
-    """
-    Per LightGBM (Booster nativo), predict(X_val) di solito restituisce prob.
-    """
+
     y_val_pred_proba  = model.predict(X_val)
     y_test_pred_proba = model.predict(X_test)
 

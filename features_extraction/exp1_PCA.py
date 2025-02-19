@@ -2,7 +2,7 @@ import os
 import librosa
 import numpy as np
 import pandas as pd
-from tqdm import tqdm  # Importa tqdm per la barra di avanzamento
+from tqdm import tqdm
 
 
 # Funzione per calcolare MFCC (ne calcola 13, poi selezioneremo gli indici desiderati)
@@ -18,11 +18,7 @@ def calculate_zcr(y):
 
 # Funzione per estrarre SOLO le MFCC desiderate (1,3,4,8,9,10,11,12,13) e ZCR
 def extract_features(file_path):
-    """
-    Restituisce un array con:
-      - MFCC 1,3,4,8,9,10,11,12,13  (in questo ordine, oppure in uno fisso)
-      - ZCR
-    """
+
     try:
         # Carichiamo l'audio
         y, sr = librosa.load(file_path, sr=None)
@@ -54,12 +50,7 @@ def extract_features(file_path):
 
 
 def extract_features_from_directory(audio_directory):
-    """
-    Estrae SOLO:
-      - MFCC 1,3,4,8,9,10,11,12,13
-      - ZCR
-    da tutti i file .wav presenti in audio_directory (e sottocartelle).
-    """
+
     features_list = []
     file_names = []
     classes = []
@@ -96,10 +87,7 @@ def extract_features_from_directory(audio_directory):
             classes.append(class_name)
             subclasses.append(subclass_name)
 
-    # Definiamo le colonne
-    # MFCC 1,3,4,8,9,10,11,12,13 + ZCR
-    # Usando un ordine coerente: (1,3,4,8,9,10,11,12,13, ZCR)
-    # Bada che "MFCC 1" in Python => index 0 => stiamo mappando. L'ordine è per coerenza
+
     columns = [
         'MFCC 1', 'MFCC 3', 'MFCC 4', 'MFCC 8',
         'MFCC 9', 'MFCC 10', 'MFCC 11', 'MFCC 12',

@@ -17,15 +17,11 @@ from lightgbm import LGBMClassifier
 from sklearn.model_selection import StratifiedKFold, GridSearchCV
 from sklearn.metrics import accuracy_score, classification_report
 
-###############################################################################
+
 #                          SPLIT DATASET MULTICLASS
-###############################################################################
+
 def split_dataset(df, train_size=0.8, val_size=0.1, test_size=0.1):
-    """
-    Suddivide il dataset in Train, Validation e Test,
-    mappando la 'Subclass' in numeri interi (multiclasse).
-    Mantiene la coesione dei gruppi (Parent) grazie a GroupShuffleSplit.
-    """
+
 
     # Encoding per la Subclass
     subclass_encoder = LabelEncoder()
@@ -89,9 +85,9 @@ def split_dataset(df, train_size=0.8, val_size=0.1, test_size=0.1):
     return X_train, X_val, X_test, y_train, y_val, y_test, subclass_encoder
 
 
-###############################################################################
+
 #                           SMOTE MULTICLASS
-###############################################################################
+
 def apply_smote_multiclass(X_train, y_train, k_neighbors=1):
     """
 
@@ -126,19 +122,11 @@ def apply_smote_multiclass(X_train, y_train, k_neighbors=1):
     return X_resampled_num, y_resampled
 
 
-###############################################################################
-#           MODELLI MULTICLASS: Random Forest, SVM, LightGBM
-###############################################################################
-def train_random_forest_multiclass_extra(X_train, y_train, X_val, y_val, X_test, y_test):
-    """
-    Modello Random Forest multiclasse, con una GridSearchCV più ampia:
-      - n_estimators su range più ampio (ad es. 100, 200, 300)
-      - max_depth su un range maggiore (5, 9, 13, None)
-      - min_samples_split/min_samples_leaf più vari
-      - max_features e bootstrap a True/False
 
-    Nota: se i tempi di training diventano eccessivi, valuta un RandomizedSearchCV.
-    """
+#           MODELLI MULTICLASS: Random Forest, SVM, LightGBM
+
+def train_random_forest_multiclass_extra(X_train, y_train, X_val, y_val, X_test, y_test):
+
 
     # Rimuoviamo colonne testuali non utili al training
     X_train = X_train.drop(columns=['Class','Parent','Subclass','File Name'], errors='ignore')
@@ -151,13 +139,13 @@ def train_random_forest_multiclass_extra(X_train, y_train, X_val, y_val, X_test,
     # Parametri più ampi
     param_grid = {
         'n_estimators': [100, 200, 300],
-        'max_depth': [5, 9, 13, None],   # None indica profondità illimitata
+        'max_depth': [5, 9, 13, None],
         'min_samples_split': [2, 5, 10],
         'min_samples_leaf': [1, 2, 4],
         'max_features': ['sqrt', 'log2'],
         'bootstrap': [True, False]
     }
-    # Attenzione: combinazioni crescono rapidamente, valuta RandomizedSearchCV se i tempi sono lunghi
+
 
     model = RandomForestClassifier(random_state=42)
     grid_search = GridSearchCV(
@@ -166,7 +154,7 @@ def train_random_forest_multiclass_extra(X_train, y_train, X_val, y_val, X_test,
         cv=5,              # K-Fold a 5
         scoring='accuracy',
         n_jobs=-1,         # Usa tutti i core
-        verbose=1          # Se vuoi debug info
+        verbose=1
     )
     grid_search.fit(X_train, y_train)
 
@@ -202,11 +190,7 @@ def train_random_forest_multiclass_extra(X_train, y_train, X_val, y_val, X_test,
 
 
 def train_svm_multiclass_extra(X_train, y_train, X_val, y_val, X_test, y_test):
-    """
-    SVM multiclasse con kernel RBF e GridSearchCV per 'C' e 'gamma'.
-    (NB: su dataset di ~38k campioni, può essere lento! Considera ridurre i dati
-    o usare un kernel lineare se i tempi sono eccessivi.)
-    """
+
 
     from sklearn.svm import SVC
     from sklearn.model_selection import GridSearchCV
@@ -262,11 +246,7 @@ def train_svm_multiclass_extra(X_train, y_train, X_val, y_val, X_test, y_test):
 def train_lightgbm_multiclass_extra(X_train, y_train,
                                     X_val, y_val,
                                     X_test, y_test):
-    """
-    Modello LightGBM multiclasse con parametri estesi e qualche
-    accorgimento per ridurre l'overfitting (max_depth, bagging_freq, ecc.).
-    Include valutazione su set di validazione e test.
-    """
+
     import numpy as np
     import pandas as pd
     from sklearn.model_selection import GridSearchCV, PredefinedSplit
@@ -360,10 +340,6 @@ from sklearn.model_selection import StratifiedKFold
 
 
 def train_lightgbm_multiclass_kfold(X_train, y_train, X_test, y_test):
-    """
-    Addestra un modello LightGBM multiclasse usando k-fold cross validation
-    (invece di un singolo set di validazione).
-  """
 
 
     # Rimuoviamo eventuali valori NaN dal target
@@ -431,9 +407,9 @@ def train_lightgbm_multiclass_kfold(X_train, y_train, X_test, y_test):
     return best_model
 
 
-###############################################################################
+
 #               CONFUSION MATRIX MULTICLASS in PERCENTUALE
-###############################################################################
+
 def rf_plot_confusion_matrices(model,
                                X_val, y_val_encoded,
                                X_test, y_test_encoded,
@@ -536,9 +512,7 @@ def lightgbm_plot_confusion_matrices(model,
                                      X_val, y_val_encoded,
                                      X_test, y_test_encoded,
                                      subclass_encoder):
-    """
-    Per LightGBM (Booster nativo), predict(X_val) di solito restituisce prob.
-    """
+
     y_val_pred_proba = model.predict_proba(X_val)
     y_test_pred_proba = model.predict_proba(X_test)
 
